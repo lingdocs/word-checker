@@ -1,32 +1,27 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, MouseEvent } from "react";
 import { useMediaQuery } from "react-responsive";
 import { getTextFromShareTarget } from "./lib/text-from-share-target";
+import Highlighter from "react-highlight-words";
 
 function App() {
   const [text, setText] = useState<string>("");
-  const [result, setResult] = useState<string>("");
   const [missing, setMissing] = useState<string[]>([]);
-  const [accents, setAccents] = useState<boolean>(false);
-  const [copyPopup, setCopyPopup] = useState<boolean>(false);
   const isBigScreen = useMediaQuery({ query: "(min-width: 500px)" });
   useEffect(() => {
     if (window.location.pathname === "/share-target") {
       setText(getTextFromShareTarget(window.location));
     }
   }, []);
-  function handleConversion(e?: FormEvent<HTMLFormElement>) {
+  function handleCheck(e?: FormEvent<HTMLFormElement>) {
     e?.preventDefault();
-    setResult("Please wait...");
     fetch("https://account.lingdocs.com/dictionary/script-to-phonetics", {
       headers: {
         "Content-Type": "application/json",
       },
       method: "POST",
-      body: JSON.stringify({ text, accents }),
+      body: JSON.stringify({ text, accents: true }),
     }).then(res => res.json()).then(res => {
       if (res.ok) {
-        // @ts-ignore
-        setResult(res.results.phonetics);
         // @ts-ignore
         setMissing(res.results.missing);
       } else {
@@ -36,36 +31,32 @@ function App() {
     }).catch((e) => {
       console.error(e);
       alert("Connection or server error");
-      setResult("");
+      setMissing([]);
     });
   }
   function handleClear() {
-    setResult("");
     setMissing([]);
     setText("");
-  }
-  function handleCopy() {
-    navigator.clipboard.writeText(result);
-    setCopyPopup(true);
-    setTimeout(() => {
-        setCopyPopup(false);
-    }, 1250);
   }
   function handlePaste() {
     navigator.clipboard.readText()
       .then(text => setText(prev => prev + text))
       .catch(console.error);
   }
+  function handleCopy(s: string) {
+    return () => navigator.clipboard.writeText(s);
+  }
   return (
     <div className="container py-3" style={{ maxWidth: "45rem" }}>
-      <h2 className="mb-4">Pashto Script to Phonetics Converter</h2>
-      <form onSubmit={handleConversion}>
+      <h2 className="mb-4">Pashto Word Checker</h2>
+      <p className="text-muted">Check which words are not present in the LingDocs Pashto Dictionary in a given text</p>
+      <form onSubmit={handleCheck}>
         <div className="form-group mb-2">
-          <label htmlFor="pashto-text">Pashto Script</label>
+          <label htmlFor="pashto-text">Pashto Text</label>
           <textarea
               className="form-control"
               id="pashto-text"
-              rows={6}
+              rows={8}
               value={text}
               onChange={e => setText(e.target.value)}
               dir="rtl"
@@ -77,81 +68,34 @@ function App() {
         </div>
         <div className="d-flex flex-row justify-content-between align-items-center">
           <button type="submit" className="btn btn-primary" disabled={!text}>
-            <i className="fa-solid fa-arrow-right-arrow-left"/> Convert
+            Check
           </button>
-          <div className="form-check">
-            <input
-              className="form-check-input small"
-              type="checkbox"
-              checked={accents}
-              id="accents"
-              onChange={e => setAccents(e.target.checked)}
-            />
-            <label className="form-check-label" htmlFor="accents">
-              incl{isBigScreen ? "ude" : "."} accents
-            </label>
-          </div>
           <div>
             {isBigScreen && <button type="button" onClick={handlePaste} className="btn btn-secondary me-2">
-              <i className="fa-solid fa-paste"/> Paste
+              Paste
             </button>}
-            <button type="button" className="btn btn-secondary" onClick={handleClear} disabled={!(text || result)}>
-              <i className="fa-solid fa-delete-left"/> Clear
+            <button type="button" className="btn btn-secondary" onClick={handleClear} disabled={!text}>
+              Clear
             </button>
           </div>
         </div>
       </form>
-
       <div className="mt-3">
-        <label htmlFor="phonetics">Phonetics</label>
-        <textarea
-          className="form-control"
-          id="phonetics"
-          rows={6}
-          value={result}
-          onChange={e => setResult(e.target.value)}
-          dir="ltr"
-          spellCheck="false"
-          autoCapitalize="false"
-          autoComplete="false"
-          autoCorrect="false"
-        />
-      </div>
-      <div className="d-flex flex-row-reverse mt-2">
-        <div>
-          <button
-            type="button"
-            disabled={!result}
-            className="btn btn-primary"
-            style={{ minWidth: "6rem" }}
-            onClick={handleCopy}
-          >
-            <i className="fa-regular fa-copy me-2" /> Copy
-          </button>
-        </div>
-      </div>
-      <div className="small my-3 mb-2">
-        Words not found in the <a href="LingDocs Pashto Dictionary">dictionary</a> are <em>estimated</em> and surrounded by <span style={{ wordBreak: "keep-all" }}>?* ... *?</span>
-      </div>
-      <div>
         {missing.length > 0 && <>
           <h5>Missing Words</h5>
-          <div className="d-flex flex-row flex-wrap">
-            {missing.map((m) => <div key={m} className="me-2">
+          <div className="d-flex flex-row flex-wrap mb-2">
+            {missing.map((m) => <button type="button" className="btn btn-light me-2" onClick={handleCopy(m)}>
               {m}
-            </div>)}
+            </button>)}
           </div>
         </>}
       </div>
-      {copyPopup && <div className="alert alert-primary text-center" role="alert" style={{
-            position: "fixed",
-            top: "30%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 9999999999999,
-        }}>
-          phonetics copied to clipboard
-        </div>}
+      <div className="mt-3 mb-4" style={{ direction: "rtl", whiteSpace: "pre-line" }}>
+        <Highlighter
+          searchWords={missing}
+          textToHighlight={text}
+        />
+      </div>
     </div>
   );
 }

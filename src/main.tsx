@@ -3,8 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./assets/css/fontawesome/css/fontawesome.min.css";
-import "./assets/css/fontawesome/css/solid.css";
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
