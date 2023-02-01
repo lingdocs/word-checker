@@ -4,8 +4,8 @@
     "display": "standalone",
     "scope": "/",
     "start_url": "/",
-    "name": "Pashto to Phonetics Converter",
-    "short_name": "Pashto to Phonetics",
+    "name": "Pashto Word Checker",
+    "short_name": "Word Checker",
     "icons": [
         {
           "src": "windows11/SmallTile.scale-100.png",
