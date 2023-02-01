@@ -83,8 +83,8 @@ function App() {
       <div className="mt-3">
         {missing.length > 0 && <>
           <h5>Missing Words</h5>
-          <div className="d-flex flex-row flex-wrap mb-2">
-            {missing.map((m) => <button type="button" className="btn btn-light me-2" onClick={handleCopy(m)}>
+          <div className="d-flex flex-row flex-wrap mb-2" style={{ rowGap: "0.25rem", columnGap: "0.5rem" }}>
+            {missing.map((m) => <button type="button" className="btn btn-light mb-2" onClick={handleCopy(m)}>
               {m}
             </button>)}
           </div>
